@@ -1,31 +1,58 @@
-import requests
+import requests, json
+
+def normalize_notices(notices):
+    res = []
+    for notice in notices:
+        tmp = {}
+        tmp["publication_number"] = notice["publication-number"]
+        tmp["title_en"] = notice["notice-title"].get("eng")
+        tmp["publication_date"] = notice["publication-date"]
+        res.append(tmp)
+    return res
 
 url = "https://api.ted.europa.eu/v3/notices/search"
 
 payload = {
-    "query": "buyer-country=FRA",
-    "fields": ["publication-number", "notice-title"],
+    "query": "buyer-country=FRA AND publication-date>=20260101",
+    "fields": ["publication-number", "notice-title", "publication-date"],
     "page": 1,
     "limit": 5
 }
 
-response = requests.post(url, json=payload, timeout=30)
+all_notices = []
 
-print("HTTP status:", response.status_code)
-response.raise_for_status()
+for page in range(1, 3):
+    payload["page"] = page
 
-data = response.json()
+    response = requests.post(url, json=payload, timeout=30)
+    response.raise_for_status()
 
-print("Response type:", type(data))
-print("Response keys:", data.keys())
+    data = response.json()
+    page_notices = data["notices"]
 
-notices = data["notices"]
+    all_notices.extend(page_notices)
 
-print("Search timed out:", data["timedOut"])
-print("Notices type:", type(notices))
-print("Returned notices:", len(notices))
+    print("Page:", page)
+    print("Returned notices:", len(page_notices))
+    print("Search timed out:", data["timedOut"])
 
-for notice in notices:
-    print(notice["publication-number"], " | " , notice["notice-title"]["eng"])
+print("Total collected:", len(all_notices))
 
-print("Total matches:", data["totalNoticeCount"])
+records = normalize_notices(all_notices)
+
+with open("normalized_tenders.json", "w", encoding="utf-8") as file:
+    json.dump(records, file, indent=2, ensure_ascii=False)
+
+for record in records:
+    print(
+        record["publication_number"],
+        "|",
+        record["publication_date"],
+        "|",
+        record["title_en"]
+    )
+
+print("Normalized records:", len(records))
+
+if records:
+    print("First normalized record:", records[0])
