@@ -1,4 +1,5 @@
 import requests, json, time
+from datetime import date, timedelta
 
 def normalize_notices(notices):
     res = []
@@ -12,36 +13,49 @@ def normalize_notices(notices):
 
 url = "https://api.ted.europa.eu/v3/notices/search"
 
+start_date = date.today() - timedelta(days=7)
+start_date_next = start_date.strftime("%Y%m%d")
+
+print("Collecting since: ", start_date)
+
 payload = {
-    "query": "buyer-country=FRA AND publication-date>=20260101",
+    "query": "buyer-country=FRA AND publication-date>=" + start_date_next,
     "fields": ["publication-number", "notice-title", "publication-date"],
     "page": 1,
     "limit": 250
 }
 
 all_notices = []
+page = 1
 
-for page in range(1, 5):
+while True:
     payload["page"] = page
-
     time.sleep(5)
+
     response = requests.post(url, json=payload, timeout=30)
+
     if response.status_code == 429:
         print(
-            "Retry-After",
+            "Retry-After:",
             response.headers.get("Retry-After", "not provided")
         )
+
     response.raise_for_status()
-
     data = response.json()
-    page_notices = data["notices"]
 
+    if data["timedOut"]:
+        raise RuntimeError("TED search timed out; collection stopped.")
+
+    page_notices = data["notices"]
     all_notices.extend(page_notices)
 
     print("Page:", page)
     print("Returned notices:", len(page_notices))
-    print("Search timed out:", data["timedOut"])
 
+    if len(page_notices) < payload["limit"]:
+        break
+
+    page += 1
 print("Total collected:", len(all_notices))
 
 records = normalize_notices(all_notices)
