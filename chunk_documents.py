@@ -9,12 +9,12 @@ with open(
     pages = json.load(file)
 
 page = pages[0]
-chunks = split_text(page["text"], 500)
+chunks = split_text(page["text"], 500, 100)
 
 records = []
 
 for page in pages:
-    chunks = split_text(page["text"], 500)
+    chunks = split_text(page["text"], 500, 100)
 
     for chunk_number, chunk in enumerate(chunks, start=1):
         records.append({

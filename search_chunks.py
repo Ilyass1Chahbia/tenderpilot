@@ -16,16 +16,21 @@ with open(
 ) as file:
     chunks = json.load(file)
 
-results = search_chunks(chunks, "ANAH")
+query = input("Search for: ").strip()
 
-print("Matches found:", len(results))
+if not query:
+    print("Please enter some text to search for.")
+else:
+    results = search_chunks(chunks, query)
 
-if not results:
-    print("No matching passages found.")
+    print("Matches found:", len(results))
 
-for result in results:
-    print(
-        result["source_file"],
-        "| Page:", result["page_number"],
-        "| Chunk:", result["chunk_number"]
-    )
+    if not results:
+        print("No matching passages found.")
+
+    for result in results:
+        print(
+            result["source_file"],
+            "| Page:", result["page_number"],
+            "| Chunk:", result["chunk_number"]
+        )
