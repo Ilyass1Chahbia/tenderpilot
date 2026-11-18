@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 def search_chunks(chunks, query):
     matches = []
@@ -9,12 +10,17 @@ def search_chunks(chunks, query):
 
     return matches
 
-with open(
-    "documents/2026-OJS214-00763826-en.chunks.json",
-    "r",
-    encoding="utf-8"
-) as file:
-    chunks = json.load(file)
+chunks = []
+
+for pdf_path in Path("documents").glob("*.pdf"):
+    chunks_path = pdf_path.with_suffix(".chunks.json")
+
+    with open(chunks_path, "r", encoding="utf-8") as file:
+        document_chunks = json.load(file)
+
+    chunks.extend(document_chunks)
+
+print("Chunks loaded:", len(chunks))
 
 query = input("Search for: ").strip()
 
