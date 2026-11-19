@@ -1,14 +1,21 @@
 import json
 from pathlib import Path
 
+def get_score(result):
+    return result["score"]
+
 def search_chunks(chunks, query):
     matches = []
 
     for chunk in chunks:
-        if query.lower() in chunk["text"].lower():
-            matches.append(chunk)
+        score = chunk["text"].lower().count(query.lower())
 
-    return matches
+        if score > 0:
+            result = chunk.copy()
+            result["score"] = score
+            matches.append(result)
+
+    return sorted(matches, key=get_score, reverse=True)
 
 chunks = []
 
@@ -34,15 +41,19 @@ else:
     if not results:
         print("No matching passages found.")
 
-    for result in results:
+    top_results = results[:3]
+    print("Showing:", len(top_results))
+    for result in top_results:
         text = result["text"]
+        score = result["score"]
         position = text.lower().find(query.lower())
         preview = text[position:position + 160]
 
         print(
             result["source_file"],
             "| Page:", result["page_number"],
-            "| Chunk:", result["chunk_number"]
+            "| Chunk:", result["chunk_number"],
+            "| Score:", score
         )
         print("Preview:", preview)
         print()
