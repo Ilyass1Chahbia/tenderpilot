@@ -35,8 +35,14 @@ else:
         print("No matching passages found.")
 
     for result in results:
+        text = result["text"]
+        position = text.lower().find(query.lower())
+        preview = text[position:position + 160]
+
         print(
             result["source_file"],
             "| Page:", result["page_number"],
             "| Chunk:", result["chunk_number"]
         )
+        print("Preview:", preview)
+        print()
