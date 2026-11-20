@@ -19,7 +19,10 @@ def get_score(result):
 with open("documents/semantic_index.json", "r", encoding="utf-8") as file:
     index_data = json.load(file)
 
-question = "Who is the buyer?"
+question = input("Question: ").strip()
+
+if not question:
+    raise SystemExit("Please enter a question.")
 
 response = requests.post(
     "http://100.90.217.38:8765/embed",
@@ -39,15 +42,22 @@ print("Stored chunks:", len(index_data["chunks"]))
 print("Question embeddings received:", len(data["embeddings"]))
 print("Numbers in question embedding:", len(question_embedding))
 
+selected_source = "2026-OJS214-00763826-en.pdf"
+
 results = []
 
 for chunk in index_data["chunks"]:
+    if chunk["source_file"] != selected_source:
+        continue
+
     result = chunk.copy()
     result["score"] = similarity(
         question_embedding,
         chunk["embedding"]
     )
     results.append(result)
+
+print("Chunks searched:", len(results))
 
 top_results = sorted(results, key=get_score, reverse=True)[:3]
 
